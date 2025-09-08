@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sua URL encurtada</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body {
+        background: linear-gradient(135deg, #2575fc 0%, #6a11cb 100%);
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+      }
+      .card {
+        border-radius: 1rem;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      }
+      .btn-custom {
+        background-color: #2575fc;
+        border: none;
+      }
+      .btn-custom:hover {
+        background-color: #1a5edc;
+      }
+      input[readonly] {
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card p-4 text-center">
+            <h2 class="mb-4">✅ Sua URL encurtada</h2>
+            <div class="input-group">
+              <input type="text" class="form-control" id="link" value="{{ url_encurtada }}" readonly>
+              <button class="btn btn-custom" onclick="copiarLink()">Copiar</button>
+            </div>
+            <a href="/" class="btn btn-link mt-3 text-light">➕ Encurtar outra URL</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function copiarLink() {
+        let input = document.getElementById("link");
+        input.select();
+        input.setSelectionRange(0, 99999);
+        document.execCommand("copy");
+        alert("Link copiado: " + input.value);
+      }
+    </script>
+  </body>
+</html>
