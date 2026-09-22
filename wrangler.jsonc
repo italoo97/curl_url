@@ -16,10 +16,11 @@
   // correspondente (ex.: /abc123) caem no Worker, que é o que queremos.
   "assets": { "directory": "./public", "binding": "ASSETS" },
 
-  // Sitekey de teste do Turnstile (sempre passa). Em produção, troque pela
-  // real -- a secret correspondente vai por `wrangler secret put`, nunca
-  // aqui. Ver docs/DECISOES.md, ADR-011.
-  "vars": { "TURNSTILE_SITE_KEY": "1x00000000000000000000AA" },
+  // Sitekey do Turnstile. É pública por definição: o navegador a recebe
+  // para renderizar o widget. Quem decide é a secret correspondente, que
+  // nunca aparece aqui -- vai por `wrangler secret put` ou pelo
+  // `--secrets-file`. Ver docs/DECISOES.md, ADR-011.
+  "vars": { "TURNSTILE_SITE_KEY": "0x4AAAAAAFAcI1blOIpRTkY2" },
 
   // Declara o secret exigido: `wrangler deploy` falha com erro claro se ele
   // não estiver configurado no Worker, em vez de subir e só quebrar quando
@@ -27,7 +28,7 @@
   "secrets": { "required": ["TURNSTILE_SECRET_KEY"] },
 
   // Fase 1. Rode `npx wrangler kv namespace create LINKS` e cole o id.
-  "kv_namespaces": [{ "binding": "LINKS", "id": "PREENCHER_COM_O_ID_DO_NAMESPACE" }],
+  "kv_namespaces": [{ "binding": "LINKS", "id": "ae80c6c0b8f44eb793fbaf5b56a288f3" }],
 
   // Fase 2: contagem de cliques. Ver ADR-005.
   "durable_objects": {
@@ -48,7 +49,7 @@
     {
       "binding": "DB",
       "database_name": "curl-url",
-      "database_id": "PREENCHER_COM_O_ID_DO_BANCO",
+      "database_id": "1252a5c7-6be8-4062-9b69-b13d20e3a7f7",
       "migrations_dir": "migrations"
     }
   ],

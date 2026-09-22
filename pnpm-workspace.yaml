@@ -1,11 +1,14 @@
 allowBuilds:
-  esbuild: set this to true or false
-  workerd: set this to true or false
+  esbuild: true
+  workerd: true
 # esbuild e workerd rodam postinstall para preparar binários nativos. O pnpm
 # bloqueia scripts de build por padrão (proteção contra supply chain) e, desde
 # a v10.16, falha o install quando há scripts ignorados. Autorizamos estes
 # dois e desligamos o modo estrito -- os binários que importam vêm das
 # dependências opcionais de plataforma, não do postinstall.
+minimumReleaseAgeExclude:
+  - '@cloudflare/workers-types@5.20260922.1'
+  - wrangler@4.136.2
 onlyBuiltDependencies:
   - esbuild
   - workerd

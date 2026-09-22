@@ -41,30 +41,52 @@
           <label><input id="oneTime" type="checkbox" /> uso único</label>
           <label><input id="expires" type="checkbox" /> expira em 1 hora</label>
         </div>
-        <div id="turnstile"></div>
+        <div id="ts-widget"></div>
       </form>
       <output id="out"></output>
     </main>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileReady" async defer></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <script>
       const out = document.getElementById('out');
       const submit = document.getElementById('submit');
       let token = null;
+      let widgetId = null;
 
-      // A sitekey vem de /api/config em vez de estar cravada aqui: a mesma
-      // página serve dev e produção sem rebuild do front.
-      window.onTurnstileReady = async () => {
+      // O container NAO pode ter id="turnstile": todo elemento com id vira
+      // uma global (window.turnstile passaria a ser o <div>), e o api.js,
+      // ao ver window.turnstile ja definido, acha que foi carregado duas
+      // vezes e aborta sem instalar render(). Por isso o id e "ts-widget".
+      // A espera abaixo so cobre o intervalo ate o script terminar de carregar.
+      function turnstileReady(timeoutMs = 10000) {
+        return new Promise((resolve, reject) => {
+          const start = Date.now();
+          (function check() {
+            if (window.turnstile && typeof window.turnstile.render === 'function') return resolve();
+            if (Date.now() - start > timeoutMs) return reject(new Error('Turnstile nao carregou a tempo.'));
+            setTimeout(check, 100);
+          })();
+        });
+      }
+
+      (async () => {
         try {
-          const { turnstileSiteKey } = await (await fetch('/api/config')).json();
-          window.turnstile.render('#turnstile', {
+          const res = await fetch('/api/config');
+          if (!res.ok) throw new Error('/api/config respondeu ' + res.status);
+          const { turnstileSiteKey } = await res.json();
+          if (!turnstileSiteKey) throw new Error('sitekey ausente em /api/config');
+          await turnstileReady();
+          widgetId = window.turnstile.render('#ts-widget', {
             sitekey: turnstileSiteKey,
             callback: (value) => { token = value; submit.disabled = false; },
             'expired-callback': () => { token = null; submit.disabled = true; },
+            'error-callback': (code) => { console.error('[Turnstile] error-callback:', code); },
           });
-        } catch {
-          out.innerHTML = '<span class="err">Nao foi possivel carregar a verificacao.</span>';
+        } catch (err) {
+          // Erro visivel no console para diagnostico, e na tela para o usuario.
+          console.error('[curl_url] falha ao carregar verificacao:', err);
+          out.innerHTML = '<span class="err">Nao foi possivel carregar a verificacao: ' + err.message + '</span>';
         }
-      };
+      })();
 
       document.getElementById('f').addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -91,7 +113,7 @@
           // Cada token do Turnstile vale uma unica validacao: sem resetar, o
           // segundo envio seria recusado com timeout-or-duplicate.
           token = null;
-          window.turnstile?.reset('#turnstile');
+          if (widgetId !== null) window.turnstile?.reset(widgetId);
         }
       });
     </script>
