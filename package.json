@@ -1,0 +1,41 @@
+{
+  "name": "curl-url",
+  "version": "0.1.0",
+  "description": "URL shortener on Cloudflare Workers, using KV, Durable Objects, D1 and R2 where each one is actually the right tool.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@12.5.1",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "gate": "pnpm run lint && pnpm run typecheck && pnpm run test",
+    "cf-typegen": "wrangler types",
+    "prepare": "husky || true"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "@cloudflare/workers-types": "^5.20260922.1",
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.5.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.136.2"
+  },
+  "lint-staged": {
+    "*.{ts,js,json,jsonc}": "biome check --write --no-errors-on-unmatched"
+  },
+  "dependencies": {
+    "uqr": "^0.1.3"
+  }
+}

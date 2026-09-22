@@ -1,0 +1,6 @@
+# Variáveis locais do `wrangler dev`. Copie para .dev.vars (que é ignorado).
+#
+# Secret de teste do Turnstile: aceita apenas o token dummy que a sitekey de
+# teste gera, e sempre passa. A secret de produção rejeitaria esse token.
+# Em produção: npx wrangler secret put TURNSTILE_SECRET_KEY
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA

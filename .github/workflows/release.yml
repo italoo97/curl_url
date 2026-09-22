@@ -1,0 +1,20 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      # Lê os Conventional Commits desde a última tag, abre (ou atualiza) um
+      # PR de release com a versão nova e o CHANGELOG. Ao dar merge nesse PR,
+      # a tag é criada. A versão nunca é editada à mão.
+      - uses: googleapis/release-please-action@v4
+        with:
+          release-type: node
