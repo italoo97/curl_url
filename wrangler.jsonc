@@ -1,0 +1,62 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "curl-url",
+  "main": "src/index.ts",
+  // Fixada em uma data que o workerd embarcado no runner de testes suporta.
+  // O binário do miniflare costuma ficar algumas semanas atrás da data mais
+  // recente; subir isso sem subir o runner quebra `pnpm test` com
+  // ERR_RUNTIME_FAILURE. Suba os dois juntos.
+  "compatibility_date": "2026-08-22",
+
+  // Logs de execução no dashboard. Ligado desde o início: descobrir um bug
+  // de produção sem observabilidade é muito mais caro que este boolean.
+  "observability": { "enabled": true },
+
+  // Front estático. Assets são servidos primeiro; caminhos sem asset
+  // correspondente (ex.: /abc123) caem no Worker, que é o que queremos.
+  "assets": { "directory": "./public", "binding": "ASSETS" },
+
+  // Sitekey de teste do Turnstile (sempre passa). Em produção, troque pela
+  // real -- a secret correspondente vai por `wrangler secret put`, nunca
+  // aqui. Ver docs/DECISOES.md, ADR-011.
+  "vars": { "TURNSTILE_SITE_KEY": "1x00000000000000000000AA" },
+
+  // Declara o secret exigido: `wrangler deploy` falha com erro claro se ele
+  // não estiver configurado no Worker, em vez de subir e só quebrar quando
+  // alguém tentar encurtar um link.
+  "secrets": { "required": ["TURNSTILE_SECRET_KEY"] },
+
+  // Fase 1. Rode `npx wrangler kv namespace create LINKS` e cole o id.
+  "kv_namespaces": [{ "binding": "LINKS", "id": "PREENCHER_COM_O_ID_DO_NAMESPACE" }],
+
+  // Fase 2: contagem de cliques. Ver ADR-005.
+  "durable_objects": {
+    "bindings": [{ "name": "CLICKS", "class_name": "LinkCoordinator" }]
+  },
+  // Renomear a classe de um Durable Object exige migration: o runtime
+  // precisa saber que as instâncias existentes continuam as mesmas, e não
+  // que uma classe sumiu e outra nasceu (o que descartaria o storage).
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["ClickCounter"] },
+    {
+      "tag": "v2",
+      "renamed_classes": [{ "from": "ClickCounter", "to": "LinkCoordinator" }]
+    }
+  ],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "curl-url",
+      "database_id": "PREENCHER_COM_O_ID_DO_BANCO",
+      "migrations_dir": "migrations"
+    }
+  ],
+
+  // Fase 4: QR codes gerados sob demanda e cacheados. Ver ADR-007.
+  "r2_buckets": [{ "binding": "QR", "bucket_name": "curl-url-qr" }],
+
+  // Fase 5: recolhe órfãos no D1 e no R2 deixados por links já expirados
+  // no KV. Todo dia às 04:00 UTC.
+  "triggers": { "crons": ["0 4 * * *"] }
+}

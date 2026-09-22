@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>curl_url — encurtador na borda</title>
+    <meta name="description" content="Encurtador de links em Cloudflare Workers, com KV, Durable Objects, D1 e R2." />
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0; min-height: 100vh; display: grid; place-items: center;
+        font: 16px/1.6 ui-sans-serif, system-ui, sans-serif; padding: 24px;
+      }
+      main { width: 100%; max-width: 30rem; }
+      h1 { font-size: 1.5rem; margin: 0 0 .25rem; }
+      p { margin: 0 0 1.5rem; opacity: .7; }
+      form { display: flex; flex-direction: column; gap: .9rem; }
+      .row { display: flex; gap: .5rem; flex-wrap: wrap; }
+      .opts { display: flex; gap: 1.2rem; flex-wrap: wrap; font-size: .9rem; opacity: .75; }
+      label { display: flex; align-items: center; gap: .4rem; }
+      button[disabled] { opacity: .5; cursor: not-allowed; }
+      .err { color: #b3261e; }
+      @media (prefers-color-scheme: dark) { .err { color: #f2a99f; } }
+      input { flex: 1 1 16rem; padding: .7rem .8rem; font: inherit; border-radius: 6px;
+              border: 1px solid color-mix(in srgb, currentColor 30%, transparent); background: none; color: inherit; }
+      button { padding: .7rem 1.2rem; font: inherit; font-weight: 600; border: 0;
+               border-radius: 6px; cursor: pointer; }
+      output { display: block; margin-top: 1.25rem; font-family: ui-monospace, monospace; word-break: break-all; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>curl_url</h1>
+      <p>Encurtador de links rodando na borda da Cloudflare.</p>
+      <form id="f">
+        <div class="row">
+          <input id="u" type="url" required placeholder="https://exemplo.com/link/bem/longo" />
+          <button id="submit" type="submit" disabled>Encurtar</button>
+        </div>
+        <div class="opts">
+          <label><input id="oneTime" type="checkbox" /> uso único</label>
+          <label><input id="expires" type="checkbox" /> expira em 1 hora</label>
+        </div>
+        <div id="turnstile"></div>
+      </form>
+      <output id="out"></output>
+    </main>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit&onload=onTurnstileReady" async defer></script>
+    <script>
+      const out = document.getElementById('out');
+      const submit = document.getElementById('submit');
+      let token = null;
+
+      // A sitekey vem de /api/config em vez de estar cravada aqui: a mesma
+      // página serve dev e produção sem rebuild do front.
+      window.onTurnstileReady = async () => {
+        try {
+          const { turnstileSiteKey } = await (await fetch('/api/config')).json();
+          window.turnstile.render('#turnstile', {
+            sitekey: turnstileSiteKey,
+            callback: (value) => { token = value; submit.disabled = false; },
+            'expired-callback': () => { token = null; submit.disabled = true; },
+          });
+        } catch {
+          out.innerHTML = '<span class="err">Nao foi possivel carregar a verificacao.</span>';
+        }
+      };
+
+      document.getElementById('f').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        submit.disabled = true;
+        out.textContent = 'Encurtando...';
+
+        const payload = { url: document.getElementById('u').value, turnstileToken: token };
+        if (document.getElementById('oneTime').checked) payload.oneTime = true;
+        if (document.getElementById('expires').checked) payload.expiresIn = 3600;
+
+        try {
+          const response = await fetch('/api/links', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json();
+          out.innerHTML = response.ok
+            ? `<a href="${data.shortUrl}">${data.shortUrl}</a><br /><a href="/api/links/${data.slug}/qr">QR code</a> &middot; <a href="/api/links/${data.slug}/stats">estatisticas</a>`
+            : `<span class="err">${data.error}</span>`;
+        } catch {
+          out.innerHTML = '<span class="err">Falha de rede. Tente de novo.</span>';
+        } finally {
+          // Cada token do Turnstile vale uma unica validacao: sem resetar, o
+          // segundo envio seria recusado com timeout-or-duplicate.
+          token = null;
+          window.turnstile?.reset('#turnstile');
+        }
+      });
+    </script>
+  </body>
+</html>
