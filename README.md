@@ -13,6 +13,8 @@ The interesting part is not the shortening. It's that a service this small
 needs **four different storage products for four different reasons**, and that
 each choice has to survive the question *"why not the simpler thing?"*.
 
+https://curl-url.italohugodf39.workers.dev
+
 ## Why these services
 
 | Concern | Product | Why not something simpler |
