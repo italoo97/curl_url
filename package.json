@@ -1,6 +1,6 @@
 {
   "name": "curl-url",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "URL shortener on Cloudflare Workers, using KV, Durable Objects, D1 and R2 where each one is actually the right tool.",
   "private": true,
   "type": "module",

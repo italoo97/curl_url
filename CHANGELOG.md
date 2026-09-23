@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/italoo97/curl_url/compare/v1.0.0...v1.0.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* keep option labels on one line ([5b58d3e](https://github.com/italoo97/curl_url/commit/5b58d3ea36cfd8ce9785c4b2af52f569dada9f40))
+
 ## 1.0.0 (2026-09-22)
 
 
